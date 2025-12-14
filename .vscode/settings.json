@@ -1,0 +1,4 @@
+{
+    "python.analysis.completeFunctionParens": false,
+    "editor.inlineSuggest.enabled": false
+}

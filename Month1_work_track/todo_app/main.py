@@ -8,15 +8,21 @@ app = FastAPI()
 class TodoItem(BaseModel):
     id:int
     task:str
-    Completed:bool=False
+    completed:bool=False
 
 
 todos={}
+@app.get("/")
+def home():
+    return "Welcome to my project for testing go to /docs"
 
 
 @app.get("/todos")
-def router():
-    return list(todos.values())
+def router(completed:bool=None):
+    result=list(todos.values())
+    if completed is not None:
+        result=[x for x in result if x.completed==completed]
+    return result
 
 @app.post("/todos")
 def add_todo(todo : TodoItem):
@@ -30,7 +36,7 @@ def update_todo(id:int):
     if id not in todos:
         raise HTTPException(status_code=404,detail="NOT FOUND")
     
-    todos[id].Completed=True
+    todos[id].completed=True
         
     return {"meassage":"Todo updated sucessfully"}
 

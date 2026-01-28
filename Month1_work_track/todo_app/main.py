@@ -1,41 +1,10 @@
-from fastapi import FastAPI, HTTPException# type: ignore
-import schemas
-import database
+from fastapi import FastAPI# type: ignore
+from routers import todo_routes
 
 app = FastAPI()
 
-# todos={}
+app.include_router(todo_routes.router)
+
 @app.get("/")
 def home():
-    return "Welcome to my project for testing go to /docs"
-
-
-@app.get("/todos")
-def router(completed:bool=None):
-    result=database.get_todos()
-    if completed is not None:
-        result=[x for x in result if x.completed==completed]
-    return result
-
-@app.post("/todos")
-def add_todo(todo : schemas.TodoItem):
-    if todo.id in database.todos:
-        raise HTTPException(status_code=400,detail="id already exists")
-    database.add_todo_to_DB(todo)
-    return {"meassage":"Todo added sucessfully"}
-
-@app.put("/todos/{id}")
-def update_todo(id:int,status:bool):
-    if id not in database.todos:
-        raise HTTPException(status_code=404,detail="NOT FOUND")
-    
-    database.update_todo_to_DB(id,status)
-        
-    return {"meassage":"Todo updated sucessfully"}
-
-@app.delete("/todos/{id}")
-def delete_task(id:int):
-    if id not in database.todos:
-        raise HTTPException(status_code=404,detail=f"no particular data with {id} exists")
-    database.delete_todo_from_DB(id)
-    return {"message":"task deleted sucessfully"}
+    return {"message": "Main Entry Point - Go to /docs for the Todo API"}

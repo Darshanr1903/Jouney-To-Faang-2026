@@ -1,10 +1,22 @@
-from fastapi import APIRouter,HTTPException
+from fastapi import APIRouter,HTTPException,Path
 import schemas,database
 
 router = APIRouter(
     prefix="/todos", # This means all routes here start with /todos
     tags=["Todos"]   # This groups them in your /docs automatically!
 )
+
+@router.get("/tasks/{task_id}",tags=["task operation"])
+async def get_single_task(task_id:int=Path(...,gt=0, description="The ID must be greater than zero")):
+    """
+    Goal for Jan 30: Practice returning an error if the ID is valid but not found.
+    """
+    # Dummy check for now:
+    if task_id > 50:
+        raise HTTPException(status_code=404, detail="Task not found in your roadmap list")
+    
+    return {"task_id": task_id, "message": "Task details retrieved"}
+
 
 
 @router.get("/")

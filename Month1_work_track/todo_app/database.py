@@ -1,18 +1,12 @@
-import schemas
+from sqlmodel import SQLModel,create_engine
 
-todos={}
+sqlite_file_name="database.db"
+sqlite_url=f"sqlite:///{sqlite_file_name}"
 
-def get_todos():
-    return list(todos.values())
+engine=create_engine(sqlite_url,echo=True)
 
-def add_todo_to_DB(todo:schemas.TodoItem):
-    todos[todo.id]=todo
-
-def update_todo_to_DB(id:int,status:bool):
-    todos[id].completed=status
-
-def delete_todo_from_DB(id:int):
-    del todos[id]
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
 
 
 

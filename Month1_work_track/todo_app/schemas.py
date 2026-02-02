@@ -1,8 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from sqlmodel import SQLModel,Field
 
-class TodoItem(BaseModel):
-    # ... means field required
-    id:int=Field(...,example=1,description="every task as unique ID")
-    task:str=Field(...,example="Watch movies",description="this contains name of the task")
-    completed:bool=Field(default=False,example=False,description="status of the task whether completed?")
+
+class TodoItem(SQLModel):
+    id:Optional[int]=Field(default=None,description="every task as unique ID",primary_key=True)
+    content:str=Field(...,description="this contains the name of task")
+    completed:bool=Field(default=False,description="whether the task is completed or not")
+

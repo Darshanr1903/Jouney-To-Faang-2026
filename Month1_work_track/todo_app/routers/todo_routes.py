@@ -1,4 +1,5 @@
-from fastapi import APIRouter,HTTPException,Path
+from fastapi import APIRouter,HTTPException,Path,Depends
+from sqlmodel import Session
 import schemas,database
 
 router = APIRouter(
@@ -20,14 +21,14 @@ async def get_single_task(task_id:int=Path(...,gt=0, description="The ID must be
 
 
 @router.get("/")
-def get_all_todos(completed:bool=None):
+def get_all_todos(completed:bool=None,session:Session=Depends(database.get_session)):
     result=database.get_todos()
     if completed is not None:
         result=[x for x in result if x.completed==completed]
     return result
 
 @router.post("/tasks",tags=["task operation"],summary="Create a New Task",response_description="Returns the created task object")
-def add_todo(todo : schemas.TodoItem):
+def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_session)):
     """
     **Detailed Logic for creating a task:**
     1. Validates the input against the **TodoItem** schema.
@@ -39,7 +40,7 @@ def add_todo(todo : schemas.TodoItem):
     return {"meassage":"Todo added sucessfully"}
 
 @router.put("/{id}")
-def update_todo(id:int,status:bool):
+def update_todo(id:int,status:bool,session:Session=Depends(database.get_session)):
     if id not in database.todos:
         raise HTTPException(status_code=404,detail="NOT FOUND")
     
@@ -48,7 +49,7 @@ def update_todo(id:int,status:bool):
     return {"meassage":"Todo updated sucessfully"}
 
 @router.delete("/{id}")
-def delete_task(id:int):
+def delete_task(id:int,session:Session=Depends(database.get_session)):
     if id not in database.todos:
         raise HTTPException(status_code=404,detail=f"no particular data with {id} exists")
     database.delete_todo_from_DB(id)

@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException,Path,Depends
-from sqlmodel import Session
+from sqlmodel import Session,select
 import schemas,database
 
 router = APIRouter(
@@ -22,10 +22,11 @@ async def get_single_task(task_id:int=Path(...,gt=0, description="The ID must be
 
 @router.get("/")
 def get_all_todos(completed:bool=None,session:Session=Depends(database.get_session)):
-    result=database.get_todos()
+    statement=select(schemas.TodoItem)
     if completed is not None:
-        result=[x for x in result if x.completed==completed]
-    return result
+        statement=statement.where(schemas.TodoItem.completed==completed)
+    results=session.exec(statement).all()
+    return results
 
 @router.post("/tasks",tags=["task operation"],summary="Create a New Task",response_description="Returns the created task object")
 def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_session)):
@@ -34,10 +35,15 @@ def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_sessio
     1. Validates the input against the **TodoItem** schema.
     2. Currently returns the data back (Logic for DB will be added in Point 2).
     """
-    if todo.id in database.todos:
-        raise HTTPException(status_code=400,detail="id already exists")
-    database.add_todo_to_DB(todo)
-    return {"meassage":"Todo added sucessfully"}
+    # to convert it into database model object
+    db_todo=schemas.TodoItem(**todo.model_dump())
+    # 1) stagging 
+    session.add(db_todo)
+    # 2) commiting(saving)
+    session.commit()
+    # 3) refreshing to get ID created by SQLite
+    session.refresh(db_todo)
+    return db_todo
 
 @router.put("/{id}")
 def update_todo(id:int,status:bool,session:Session=Depends(database.get_session)):

@@ -47,16 +47,22 @@ def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_sessio
 
 @router.put("/{id}")
 def update_todo(id:int,status:bool,session:Session=Depends(database.get_session)):
-    if id not in database.todos:
-        raise HTTPException(status_code=404,detail="NOT FOUND")
-    
-    database.update_todo_to_DB(id,status)
-        
-    return {"meassage":"Todo updated sucessfully"}
+    db_todo=session.get(schemas.TodoItem,id)
+
+    if not db_todo:
+        raise HTTPException(status_code=404,detail="Task not found")
+    db_todo.completed=status
+    session.add(db_todo)
+    session.commit()
+    session.refresh(db_todo)
+    return db_todo
 
 @router.delete("/{id}")
 def delete_task(id:int,session:Session=Depends(database.get_session)):
-    if id not in database.todos:
-        raise HTTPException(status_code=404,detail=f"no particular data with {id} exists")
-    database.delete_todo_from_DB(id)
-    return {"message":"task deleted sucessfully"}
+    db_todo=session.get(schemas.TodoItem,id)
+
+    if not db_todo:
+        raise HTTPException(status_code=404,detail=f"no task with {id} was found")
+    session.delete(db_todo)
+    session.commit()
+    return {"message" : f"Task with {id} was deleted successfully"}

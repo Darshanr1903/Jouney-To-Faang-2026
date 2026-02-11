@@ -1,4 +1,4 @@
-from fastapi import APIRouter,HTTPException,Path,Depends
+from fastapi import APIRouter,HTTPException,Path,Depends,status
 from sqlmodel import Session,select
 import schemas,database
 
@@ -8,15 +8,12 @@ router = APIRouter(
 )
 
 @router.get("/tasks/{task_id}",tags=["task operation"])
-async def get_single_task(task_id:int=Path(...,gt=0, description="The ID must be greater than zero")):
-    """
-    Goal for Jan 30: Practice returning an error if the ID is valid but not found.
-    """
-    # Dummy check for now:
-    if task_id > 50:
+def get_single_task(task_id:int,session:Session=Depends(database.get_session)):
+    db_todo=session.get(schemas.TodoItem,id)
+    if not db_todo:
         raise HTTPException(status_code=404, detail="Task not found in your roadmap list")
     
-    return {"task_id": task_id, "message": "Task details retrieved"}
+    return db_todo
 
 
 
@@ -36,7 +33,10 @@ def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_sessio
     2. Currently returns the data back (Logic for DB will be added in Point 2).
     """
     # to convert it into database model object
+    if not todo.content or todo.content.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detsils="Bad Request")
     db_todo=schemas.TodoItem(**todo.model_dump())
+
     # 1) stagging 
     session.add(db_todo)
     # 2) commiting(saving)

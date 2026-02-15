@@ -1,6 +1,6 @@
 from fastapi import APIRouter,HTTPException,Path,Depends,status
 from sqlmodel import Session,select
-import schemas,database
+from .. import schemas,database
 
 router = APIRouter(
     prefix="/todos", # This means all routes here start with /todos
@@ -9,6 +9,8 @@ router = APIRouter(
 
 @router.get("/tasks/{task_id}",tags=["task operation"])
 def get_single_task(task_id:int,session:Session=Depends(database.get_session)):
+    if task_id<0:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,details="invalid task id")
     db_todo=session.get(schemas.TodoItem,id)
     if not db_todo:
         raise HTTPException(status_code=404, detail="Task not found in your roadmap list")
@@ -33,8 +35,8 @@ def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_sessio
     2. Currently returns the data back (Logic for DB will be added in Point 2).
     """
     # to convert it into database model object
-    if not todo.content or todo.content.strip():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detsils="Bad Request")
+    if not todo.content or not todo.content.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Bad Request")
     db_todo=schemas.TodoItem(**todo.model_dump())
 
     # 1) stagging 
@@ -47,6 +49,8 @@ def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_sessio
 
 @router.put("/{id}")
 def update_todo(id:int,status:bool,session:Session=Depends(database.get_session)):
+    if id<0:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="invalid task id")
     db_todo=session.get(schemas.TodoItem,id)
 
     if not db_todo:
@@ -59,6 +63,8 @@ def update_todo(id:int,status:bool,session:Session=Depends(database.get_session)
 
 @router.delete("/{id}")
 def delete_task(id:int,session:Session=Depends(database.get_session)):
+    if id<0:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="invalid task id")
     db_todo=session.get(schemas.TodoItem,id)
 
     if not db_todo:

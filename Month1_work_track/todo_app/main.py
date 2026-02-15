@@ -1,6 +1,6 @@
 from fastapi import FastAPI# type: ignore
-from routers import todo_routes
-import database 
+from .routers import todo_routes
+from . import database 
 from contextlib import asynccontextmanager
 
 @asynccontextmanager

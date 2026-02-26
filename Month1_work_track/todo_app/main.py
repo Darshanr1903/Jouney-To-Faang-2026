@@ -13,7 +13,7 @@ async def lifespan(app:FastAPI):
 
 
 app = FastAPI(
-    task="Darshan R's Task manager API",
+    title="Darshan R's Task manager API",
     description="An API to manage my 100 Days of Code tasks.",
     version="1.0.1",
     lifespan=lifespan,

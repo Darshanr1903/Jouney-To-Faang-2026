@@ -1,6 +1,7 @@
 from fastapi import APIRouter,HTTPException,Path,Depends,status
 from sqlmodel import Session,select,func
 from .. import schemas,database,utils
+from..exceptions import CredentialException,UserAlreadyExistException
 
 router=APIRouter(
     prefix="/users",
@@ -12,7 +13,7 @@ def create_user(user_in:schemas.UserCreate,session:Session=Depends(database.get_
     existing_user=session.exec(select(schemas.User).where(schemas.User.email==user_in.email)).first()
 
     if existing_user:
-        raise HTTPException(status_code=400,detail="user already exists")
+        raise UserAlreadyExistException()
     
     # 2. Convert UserCreate to User (Table Model)
     # Note: We manually hash here (logic for real hashing with passlib is the next step!)
@@ -38,7 +39,7 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         db_user=session.exec(statement).first()
 
         if not db_user or not utils.verifying_password(user_in.password,db_user.hashed_password):
-            raise HTTPException(status_code=403,detail="user not found or invalid credentials")
+            raise CredentialException()
         
         return {"message": "Login successful", "user": db_user}
     

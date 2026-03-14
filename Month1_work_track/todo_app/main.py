@@ -1,5 +1,5 @@
 from fastapi import FastAPI# type: ignore
-from .routers import todo_routes
+from .routers import todo_routes,user_routes
 from . import database 
 from contextlib import asynccontextmanager
 
@@ -24,6 +24,7 @@ app = FastAPI(
 )
 
 app.include_router(todo_routes.router)
+app.include_router(user_routes.router)
 
 @app.get("/")
 def home():

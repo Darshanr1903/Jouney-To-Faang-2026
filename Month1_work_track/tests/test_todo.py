@@ -44,3 +44,14 @@ def test_delete_route():
         data=response.json()
         assert data["message"]==f"Task with {id} was deleted successfully"
 
+def test_post_user_route():
+    user_in={
+        "username":"DARSHAN R",
+        "email":"darshanr974151@gmail.com",
+        "password":"Darshanr@01"
+    }
+    with TestClient(app) as client:
+        response=client.post("/registration",json=user_in)
+        assert response.status_code==200
+        
+

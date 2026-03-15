@@ -41,6 +41,8 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         if not db_user or not utils.verifying_password(user_in.password,db_user.hashed_password):
             raise CredentialException()
         
-        return {"message": "Login successful", "user": db_user}
+        access_token=utils.create_access_token(data={"sub":db_user.username,"role":db_user.UserRole})
+        
+        return {"access_toke":access_token,"token_type":"bearer"}
     
 

@@ -1,4 +1,15 @@
 from passlib.context import CryptContext
+from datetime import datetime,timezone,timedelta
+from dotenv import load_dotenv
+from .exceptions import CredentialException
+from jose import jwt,JWTError
+import os
+
+load_dotenv()
+
+ALGORITHM=os.getenv("ALGORITHM")
+SECRET_KEY=os.getenv("SECRET_KEY")
+ACCESS_TOKEN_EXPIRE_MINUTES=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 pwd_context=CryptContext(schemes=["argon2","bcrypt"],deprecated="auto")
 
@@ -10,3 +21,25 @@ def hashed_password(password:str)->str:
 
 def verifying_password(plain_password:str,hash_password:str)->bool:
     return pwd_context.verify(plain_password,hash_password)
+
+
+def create_access_token(data:dict):
+    to_encode=data.copy()
+    expire=datetime.now(timezone.utc)+timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp":expire})
+    encoded_jwt=jwt.encode(to_encode,SECRET_KEY,ALGORITHM)
+    return encoded_jwt
+
+
+def verify_access_token(token:str):
+    try:
+        payload=jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
+        username:str=payload.get("sub")
+        if not username:
+            raise CredentialException()
+        return username
+    except JWTError:
+        raise CredentialException()
+
+    
+

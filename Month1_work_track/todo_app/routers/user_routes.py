@@ -43,6 +43,6 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         
         access_token=utils.create_access_token(data={"sub":db_user.username,"role":db_user.UserRole})
         
-        return {"access_toke":access_token,"token_type":"bearer"}
+        return {"access_token":access_token,"token_type":"bearer"}
     
 

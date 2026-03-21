@@ -42,7 +42,12 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
             raise CredentialException()
         
         access_token=utils.create_access_token(data={"sub":db_user.username,"role":db_user.UserRole})
+        refresh_token=utils.create_refresh_token(data={"sub":db_user.username,"role":db_user.UserRole})
+        db_user.refresh_token=refresh_token
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
         
-        return {"access_token":access_token,"token_type":"bearer"}
+        return {"access_token":access_token,"refresh_token":refresh_token,"token_type":"bearer"}
     
 

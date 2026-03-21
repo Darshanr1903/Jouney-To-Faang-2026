@@ -36,6 +36,8 @@ class UserCreate(UserBase):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
+
+    refresh_token:Optional[str]=Field(default=None)
     
     # MAGIC RELATIONSHIP: A user has a list of TodoItems
     todos: List["TodoItem"] = Relationship(back_populates="owner")
@@ -58,6 +60,7 @@ class TodoItem(SQLModel, table=True):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token:str
     token_type: str
 
 class TokenData(BaseModel):

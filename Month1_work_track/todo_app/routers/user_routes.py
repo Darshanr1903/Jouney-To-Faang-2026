@@ -1,12 +1,17 @@
-from fastapi import APIRouter,HTTPException,Path,Depends,status
+from fastapi import APIRouter,HTTPException,Path,Depends,status,Body
 from sqlmodel import Session,select,func
 from .. import schemas,database,utils
 from..exceptions import CredentialException,UserAlreadyExistException
+from jose import jwt,JWTError
+import os
 
 router=APIRouter(
     prefix="/users",
     tags=["Users"]
 )
+
+SECRET_KEY=os.getenv("SECRET_KEY")
+ALGORITHM=os.getenv("ALGORITHM")
 
 @router.post("/registration",response_model=schemas.UserRead)
 def create_user(user_in:schemas.UserCreate,session:Session=Depends(database.get_session)):
@@ -49,5 +54,24 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         session.refresh(db_user)
         
         return {"access_token":access_token,"refresh_token":refresh_token,"token_type":"bearer"}
+
+
+@router.post("/refresh",response_model=schemas.Token)
+def refresh_access_token(refresh_token:str=Body(...,embed=True),session:Session=Depends(database.get_session)):
+     try:
+          payload=jwt.decode(refresh_token,SECRET_KEY,algorithms=[ALGORITHM])
+          username=payload["sub"]
+          if not username:
+               raise CredentialException()
+          user=session.exec(select(schemas.User).where(schemas.User.username==username)).first()
+
+          if not user or user.refresh_token!=refresh_token:
+               raise CredentialException()
+          new_access_token=utils.create_access_token(data={"sub":username,"role":user.UserRole})
+          return {"access_token":new_access_token,"refresh_token":refresh_token,"token_type":"bearer"}
+     except JWTError:
+          raise CredentialException()
+
+        
     
 

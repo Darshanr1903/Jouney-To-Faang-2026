@@ -3,6 +3,7 @@ from sqlmodel import SQLModel, Field, Relationship # Added Relationship
 from typing import Optional, List
 from enum import Enum
 import re
+from datetime import datetime
 
 class Role(str, Enum):
     User = "user"
@@ -41,6 +42,7 @@ class User(UserBase, table=True):
     
     # MAGIC RELATIONSHIP: A user has a list of TodoItems
     todos: List["TodoItem"] = Relationship(back_populates="owner")
+    sessions:List["UserSession"]=Relationship(back_populates="user")
 
 class UserRead(UserBase):
     id: int
@@ -54,7 +56,23 @@ class TodoItem(SQLModel, table=True):
     username: Optional[str] = Field(default=None, foreign_key="user.username")
     
     # MAGIC RELATIONSHIP: A TodoItem belongs to a User
-    owner: Optional[User] = Relationship(back_populates="todos")
+    owner: Optional["User"] = Relationship(back_populates="todos")
+
+class UserSession(SQLModel,table=True):
+    id:Optional[int]=Field(default=None,primary_key=True,description="every session as a uinque ID")
+    session_token:str=Field(index=True,unique=True)
+    user_id:int=Field(foreign_key="user.id",ondelete="CASCADE")
+
+    #METADATA
+    ip_address:Optional[str]=Field(default=None)
+    user_agent:Optional[str]=Field(default=None)
+    expires_on:datetime=Field(...,description="When this token becomes invalid")
+
+    
+    created_at:datetime=Field(default_factory=datetime.utcnow)
+
+    #MAGIC RELATIONSHIP
+    user:Optional["User"]=Relationship(back_populates="sessions")
 
 # --- TOKEN MODELS ---
 

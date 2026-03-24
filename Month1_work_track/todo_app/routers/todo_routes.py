@@ -20,7 +20,7 @@ def get_single_task(task_id:int,session:Session=Depends(database.get_session),cu
 
 
 @router.get("/")
-def get_all_todos(completed:bool=None,session:Session=Depends(database.get_session),current_user:str=Depends(utils.verify_access_token)):
+def get_all_todos(completed:bool=None,session:Session=Depends(database.get_session),current_user:str=Depends(utils.check_blacklist)):
     statement=select(schemas.TodoItem).where(schemas.TodoItem.username==current_user)
     if completed is not None:
         statement=statement.where(schemas.TodoItem.completed==completed)
@@ -28,7 +28,7 @@ def get_all_todos(completed:bool=None,session:Session=Depends(database.get_sessi
     return results
 
 @router.post("/tasks",tags=["task operation"],summary="Create a New Task",response_description="Returns the created task object")
-def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_session),current_user:str=Depends(utils.verify_access_token)):
+def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_session),current_user:str=Depends(utils.check_blacklist)):
     """
     **Detailed Logic for creating a task:**
     1. Validates the input against the **TodoItem** schema.
@@ -49,7 +49,7 @@ def add_todo(todo : schemas.TodoItem,session:Session=Depends(database.get_sessio
     return todo
 
 @router.put("/{task_id}")
-def update_todo(task_id:int,is_completed:bool,session:Session=Depends(database.get_session),current_user:str=Depends(utils.verify_access_token)):
+def update_todo(task_id:int,is_completed:bool,session:Session=Depends(database.get_session),current_user:str=Depends(utils.check_blacklist)):
     if task_id<0:
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="invalid task id")
     db_todo=session.get(schemas.TodoItem,task_id)
@@ -63,7 +63,7 @@ def update_todo(task_id:int,is_completed:bool,session:Session=Depends(database.g
     return db_todo
 
 @router.delete("/{task_id}")
-def delete_task(task_id:int,session:Session=Depends(database.get_session),current_user:str=Depends(utils.verify_access_token)):
+def delete_task(task_id:int,session:Session=Depends(database.get_session),current_user:str=Depends(utils.check_blacklist)):
     if task_id<0:
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="invalid task id")
     db_todo=session.get(schemas.TodoItem,task_id)

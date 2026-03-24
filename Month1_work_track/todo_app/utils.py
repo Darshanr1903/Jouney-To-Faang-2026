@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 from .exceptions import CredentialException
 from jose import jwt,JWTError
 import os
+from fastapi import Depends
+from sqlmodel import SQLModel,Session,select
+from . import database,schemas,exceptions
+from fastapi.security import OAuth2PasswordBearer
 
 load_dotenv()
 
@@ -13,6 +17,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_DAYS=int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
 
 pwd_context=CryptContext(schemes=["argon2","bcrypt"],deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def hashed_password(password:str)->str:
@@ -48,6 +53,14 @@ def verify_access_token(token:str):
         return username
     except JWTError:
         raise CredentialException()
+    
+def check_blacklist(token:str=Depends(oauth2_scheme),session:Session=Depends(database.get_session)):
+    is_blacklist=session.exec(select(schemas.blacklist).where(schemas.blacklist.token==token)).first()
+    if is_blacklist:
+        raise exceptions.CredentialException()
+    
+    return verify_access_token(token)
+    
 
     
 

@@ -55,6 +55,18 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         
         return {"access_token":access_token,"refresh_token":refresh_token,"token_type":"bearer"}
 
+@router.post("/logout")
+def logout(token:str,session:Session=Depends(database.get_session),current_user:str=Depends(utils.verify_access_token)):
+        is_blacklist=session.exec(select(schemas.blacklist).where(schemas.blacklist.token==token))
+        if not is_blacklist:
+          #add to blacklist
+          blacklist_token=schemas.blacklist(token)
+          session.add(blacklist_token)
+          session.commit()
+        return {"message":"successfully logout.Token revoked"}
+
+     
+
 
 @router.post("/refresh",response_model=schemas.Token)
 def refresh_access_token(refresh_token:str=Body(...,embed=True),session:Session=Depends(database.get_session)):

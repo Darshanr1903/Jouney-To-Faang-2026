@@ -83,3 +83,9 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = Field(default=None)
+
+#blacklist table
+
+class blacklist(SQLModel,table=True):
+    id=Optional[int]=Field(default=None,primary_key=True)
+    token:str=Field(index=True,unique=True)

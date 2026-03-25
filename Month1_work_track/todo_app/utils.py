@@ -60,6 +60,17 @@ def check_blacklist(token:str=Depends(oauth2_scheme),session:Session=Depends(dat
         raise exceptions.CredentialException()
     
     return verify_access_token(token)
+
+def get_current_user(user_name:str=Depends(check_blacklist),session:Session=Depends(database.get_session))->schemas.User:
+    user=session.exec(select(schemas.User).where(schemas.User.username==user_name)).first()
+    if not user:
+        raise exceptions.CredentialException()
+    return user
+
+def admin_verification(current_user:schemas.User=Depends(get_current_user))->schemas.User:
+    if current_user.UserRole!=schemas.Role.Admin:
+        raise exceptions.CredentialException()
+    return current_user
     
 
     

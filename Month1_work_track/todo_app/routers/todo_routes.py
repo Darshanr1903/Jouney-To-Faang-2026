@@ -73,3 +73,12 @@ def delete_task(task_id:int,session:Session=Depends(database.get_session),curren
     session.delete(db_todo)
     session.commit()
     return {"message" : f"Task with {task_id} was deleted successfully"}
+
+@router.get("/tasks/all",tags=["Admin operation"])
+def get_all_todos_list(current_user:schemas.User=Depends(utils.admin_verification),session:Session=Depends(database.get_session)):
+    todos_list=session.exec(select(schemas.TodoItem)).all()
+    return {
+        "message": f"Welcome Admin {current_user.username}",
+        "total_system_tasks": len(todos_list),
+        "data": todos_list
+    }

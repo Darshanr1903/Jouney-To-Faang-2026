@@ -15,6 +15,7 @@ class UserBase(SQLModel):
     username: str = Field(index=True, unique=True, min_length=8, max_length=28)
     email: EmailStr = Field(index=True, unique=True)
     UserRole: Role = Field(default=Role.User)
+    is_verified:bool=Field(default=False)
 
 class UserCreate(UserBase):
     password: str

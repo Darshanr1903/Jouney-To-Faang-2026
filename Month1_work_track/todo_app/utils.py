@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from .exceptions import CredentialException
 from jose import jwt,JWTError
 import os
-from fastapi import Depends
+from fastapi import Depends,HTTPException,status
 from sqlmodel import SQLModel,Session,select
 from . import database,schemas,exceptions
 from fastapi.security import OAuth2PasswordBearer
@@ -15,6 +15,7 @@ ALGORITHM=os.getenv("ALGORITHM")
 SECRET_KEY=os.getenv("SECRET_KEY")
 ACCESS_TOKEN_EXPIRE_MINUTES=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_DAYS=int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
+REGESTRATION_TOKEN_EXPIRE_MINUTES=int(os.getenv("REGESTRATION_TOKEN_EXPIRE_MINUTES"))
 
 pwd_context=CryptContext(schemes=["argon2","bcrypt"],deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -69,8 +70,17 @@ def get_current_user(user_name:str=Depends(check_blacklist),session:Session=Depe
 
 def admin_verification(current_user:schemas.User=Depends(get_current_user))->schemas.User:
     if current_user.UserRole!=schemas.Role.Admin:
-        raise exceptions.CredentialException()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="only Admins are allowed")
     return current_user
+
+
+def create_regestration_token(data:dict):
+    to_encode=data.copy()
+    expire=datetime.now(timezone.utc)+timedelta(minutes=REGESTRATION_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp":expire})
+    encode_jwt=jwt.encode(to_encode,SECRET_KEY,ALGORITHM)
+    return encode_jwt
+
     
 
     

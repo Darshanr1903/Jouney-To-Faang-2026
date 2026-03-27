@@ -10,6 +10,9 @@ class Role(str, Enum):
     Admin = "admin"
 
 # --- USER MODELS ---
+class Password(SQLModel):
+    new_password:str
+    token:str
 
 class UserBase(SQLModel):
     username: str = Field(index=True, unique=True, min_length=8, max_length=28)
@@ -40,6 +43,7 @@ class User(UserBase, table=True):
     hashed_password: str
 
     refresh_token:Optional[str]=Field(default=None)
+    regestration_token:Optional[str]=Field(default=None)
     
     # MAGIC RELATIONSHIP: A user has a list of TodoItems
     todos: List["TodoItem"] = Relationship(back_populates="owner")
@@ -88,5 +92,5 @@ class TokenData(BaseModel):
 #blacklist table
 
 class blacklist(SQLModel,table=True):
-    id=Optional[int]=Field(default=None,primary_key=True)
+    id:Optional[int]=Field(default=None,primary_key=True)
     token:str=Field(index=True,unique=True)

@@ -39,7 +39,6 @@ def create_user(user_in:schemas.UserCreate,session:Session=Depends(database.get_
 
     session.add(db_user)
     session.commit()
-    session.refresh(db_user)
 
 
 
@@ -70,6 +69,63 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         session.refresh(db_user)
         
         return {"access_token":access_token,"refresh_token":refresh_token,"token_type":"bearer"}
+
+@router.post("/login/forget-password")
+def recover_password(email:str,session:Session=Depends(database.get_session)):
+    db_user=session.exec(select(schemas.User).where(schemas.User.email==email)).first()
+    if not db_user:
+        return {"message":"if that email exist password has been sent to mail"}
+    # TOKEN GENERATION and storing its hash
+    raw_token = utils.create_regestration_token(data={"sub": db_user.username})
+    db_user.regestration_token=raw_token
+
+    session.add(db_user)
+    session.commit()
+
+    # --- STEP 4: SIMULATE EMAIL DELIVERY ---
+    reset_url = f"http://localhost:8000/users/forgot-password?token={raw_token}"
+    print(f"\n--- EMAIL INTERCEPTED ---")
+    print(f"To: {db_user.email}")
+    print(f"Subject: Please reset your password")
+    print(f"Body: Click here to verify: {reset_url}")
+    print(f"-------------------------\n")
+
+
+    return {"message":"if that email exist password has been sent to mail"}
+
+@router.post("/reset-password")
+def reset_password(reset_data:schemas.Password,session:Session=Depends(database.get_session)):
+    try:
+
+        payload=jwt.decode(reset_data.token,SECRET_KEY,algorithms=[ALGORITHM])
+        username=payload["sub"]
+
+        if not username:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid token structure")
+        
+        user=session.exec(select(schemas.User).where(schemas.User.username==username)).first()
+        
+        if not user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="User not found")
+        
+        if user.regestration_token!=reset_data.token:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid or expired token")
+        
+        user.hashed_password=utils.hashed_password(reset_data.new_password)
+        user.regestration_token=None
+
+        session.add(user)
+        session.commit()
+
+        return {"message": "Password has been reset successfully. You can now log in."}
+    
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid or expired token")
+
+
+    
+
+    
 
 @router.post("/logout")
 def logout(token:str,session:Session=Depends(database.get_session),current_user:str=Depends(utils.verify_access_token)):

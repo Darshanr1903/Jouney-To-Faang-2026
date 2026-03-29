@@ -1,10 +1,11 @@
-from fastapi import APIRouter,HTTPException,Path,Depends,status,Body
+from fastapi import APIRouter,HTTPException,Path,Depends,status,Body,Request
 from sqlmodel import Session,select,func
 from datetime import datetime,timezone,timedelta
 from .. import schemas,database,utils
 from..exceptions import CredentialException,UserAlreadyExistException
 from jose import jwt,JWTError
 import os
+from rate_limiter import limiter
 
 router=APIRouter(
     prefix="/users",
@@ -54,7 +55,9 @@ def create_user(user_in:schemas.UserCreate,session:Session=Depends(database.get_
     return db_user
 
 @router.post("/login")
-def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_session)):
+@limiter.limit("5/minute") # Only allow 5 attempts per minute per IP
+#slowapi requires Request parameter to work
+def login(request:Request,user_in:schemas.UserCreate,session:Session=Depends(database.get_session)):
         statement=select(schemas.User).where(schemas.User.username==user_in.username)
         db_user=session.exec(statement).first()
 
@@ -71,7 +74,8 @@ def login(user_in:schemas.UserCreate,session:Session=Depends(database.get_sessio
         return {"access_token":access_token,"refresh_token":refresh_token,"token_type":"bearer"}
 
 @router.post("/login/forget-password")
-def recover_password(email:str,session:Session=Depends(database.get_session)):
+@limiter.limit("3/minute")
+def recover_password(request:Request,email:str,session:Session=Depends(database.get_session)):
     db_user=session.exec(select(schemas.User).where(schemas.User.email==email)).first()
     if not db_user:
         return {"message":"if that email exist password has been sent to mail"}

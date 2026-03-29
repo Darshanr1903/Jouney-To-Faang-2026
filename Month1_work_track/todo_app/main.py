@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routers import todo_routes,user_routes
 from . import database 
 from contextlib import asynccontextmanager
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.errors import RateLimitExceeded
+from .rate_limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
@@ -31,6 +35,9 @@ origins=[
     "http://127.0.0.1:5500",
     # future domains or urls you can add accordingly
 ]
+app.state.limiter=limiter
+app.add_exception_handler(RateLimitExceeded,_rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(CORSMiddleware,allow_origins=origins,allow_credentials=True,allow_methods=['*'],allow_headers=['*'])
 
 @app.middleware('http')

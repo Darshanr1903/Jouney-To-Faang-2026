@@ -1,7 +1,38 @@
 from sqlmodel import SQLModel,Field,Relationship
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel,EmailStr,HttpUrl
 from typing import Optional
 from datetime import datetime,timezone
+
+#URL API SCHEMAS
+
+class URL_Create(BaseModel):
+    target_url:HttpUrl
+
+class URL_Responce(BaseModel):
+    id:int
+    short_id:int
+    target_url:HttpUrl
+    created_at:datetime
+    expires_at:Optional[datetime]=None
+
+
+#USER API SCHEMAS
+
+class User_create(BaseModel):
+    email:EmailStr
+    password:str
+
+class User_Responce(BaseModel):
+    id:int
+    email:EmailStr
+    is_active:bool
+
+#UserAnalytics API SCHEMAS
+class UserAnalytics_Responce(BaseModel):
+    url_id:int
+    ip:Optional[str]=None
+    user_agent:Optional[str]=None
+    referer:Optional[str]=None
 
 
 class URL(SQLModel,table=True):

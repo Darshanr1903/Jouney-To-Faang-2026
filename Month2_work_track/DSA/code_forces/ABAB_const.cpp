@@ -1,5 +1,4 @@
 #include<iostream>
-#include<bits/stdc++.h>
 using namespace std;
 bool f(string& T,string& X,int i,int j,int idx){
     if(idx>=(int)T.length()) return true;

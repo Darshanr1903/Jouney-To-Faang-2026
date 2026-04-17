@@ -10,7 +10,7 @@ class URL_Create(BaseModel):
 
 class URL_Responce(BaseModel):
     id:int
-    short_id:int
+    short_id:str
     target_url:HttpUrl
     created_at:datetime
     expires_at:Optional[datetime]=None
@@ -23,7 +23,7 @@ class User_create(BaseModel):
     password:str
 
 class User_Responce(BaseModel):
-    id:int
+    user_id:int
     email:EmailStr
     is_active:bool
 
@@ -37,7 +37,7 @@ class UserAnalytics_Responce(BaseModel):
 
 class URL(SQLModel,table=True):
     id:Optional[int]=Field(default=None,primary_key=True)
-    short_id:str=Field(unique=True,index=True,nullable=False)
+    short_id:str=Field(unique=True,index=True)
     user_id:Optional[int]=Field(default=None,foreign_key="user.user_id")
     target_url:str=Field(nullable=False)
     created_at:datetime=Field(default_factory=lambda:datetime.now(timezone.utc))

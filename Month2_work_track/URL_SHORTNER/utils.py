@@ -1,3 +1,9 @@
+import hashlib
+import base64
+import time
+import uuid
+
+
 BASE62_ALPHABET="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 def encode_base62(num:int)->str:
     if num==0:
@@ -17,4 +23,18 @@ def decode_base62(base62_str:str)->int:
         num=num*62+BASE62_ALPHABET.find(char)
     
     return num
+
+def generate_secure_hash(long_url:str,length:int=7):
+    #generating a unique string
+    unique_string=f"{long_url}-{time.time()}-{uuid.uuid4()}"
+
+    #hash the unique string using SHA 256
+    hashed_bytes=hashlib.sha256(unique_string.encode("utf-8")).digest()
+
+    #converting bytes to url safe format
+    safe_encode_string=base64.urlsafe_b64encode(hashed_bytes).decode("utf-8")
+
+    clean_string=safe_encode_string.replace('=','').replace('-','').replace('_','')
+
+    return clean_string[:length]
 

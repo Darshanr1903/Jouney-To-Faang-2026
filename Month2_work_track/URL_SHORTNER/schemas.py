@@ -37,7 +37,7 @@ class UserAnalytics_Responce(BaseModel):
 
 class URL(SQLModel,table=True):
     id:Optional[int]=Field(default=None,primary_key=True)
-    short_id:str=Field(unique=True,index=True)
+    short_id:Optional[str]=Field(default=None,unique=True,index=True)
     user_id:Optional[int]=Field(default=None,foreign_key="user.user_id")
     target_url:str=Field(nullable=False)
     created_at:datetime=Field(default_factory=lambda:datetime.now(timezone.utc))

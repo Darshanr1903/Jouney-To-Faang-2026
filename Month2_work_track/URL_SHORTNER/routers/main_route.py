@@ -1,6 +1,7 @@
 from fastapi import APIRouter,HTTPException,status,Depends
 from sqlmodel import Session
 from pydantic import HttpUrl
+import utils
 import schemas,database
 import secrets
 from fastapi.responses import RedirectResponse
@@ -12,17 +13,15 @@ router=APIRouter(
 )
 
 
-@router.post("/urls/short",status_code=202)
+@router.post("/urls/short",status_code=201)
 def create_short_url(long_url:schemas.URL_Create,session:Session=Depends(database.get_session)):
-    short_code=secrets.token_urlsafe(5)
 
+    new_url=schemas.URL(target_url=str(long_url.target_url))
 
-    # Optional but recommended: Check for collisions in the DB
-    # while session.exec(select(URL).where(URL.short_id == short_code)).first():
-    #     short_code = secrets.token_urlsafe(5)
-
-    new_url=schemas.URL(short_id=short_code,target_url=str(long_url.target_url))
-
+    session.add(new_url)
+    session.commit()
+    code=utils.encode_base62(new_url.id)
+    new_url.short_id=code
     session.add(new_url)
     session.commit()
     session.refresh(new_url)

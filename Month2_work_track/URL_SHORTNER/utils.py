@@ -2,6 +2,7 @@ import hashlib
 import base64
 import time
 import uuid
+import httpx
 
 
 BASE62_ALPHABET="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -37,4 +38,13 @@ def generate_secure_hash(long_url:str,length:int=7):
     clean_string=safe_encode_string.replace('=','').replace('-','').replace('_','')
 
     return clean_string[:length]
+
+async def verify_url_reachability(url:str)->bool:
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            responce=client.head(url,follow_redirects=True)
+            return responce<400
+
+    except:
+        return False
 

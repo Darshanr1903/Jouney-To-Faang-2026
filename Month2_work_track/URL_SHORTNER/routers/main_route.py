@@ -17,6 +17,9 @@ router=APIRouter(
 
 @router.post("/urls/short", status_code=201)
 def create_short_url(long_url: schemas.URL_Create, session: Session = Depends(database.get_session)):
+    is_reachable=utils.verify_url_reachability(str(long_url.target_url))
+    if not is_reachable:
+        raise HTTPException(status_code=400,details="url not found or doesnt exist") 
     
     max_retries = 3  # How many times to try generating a unique hash
     

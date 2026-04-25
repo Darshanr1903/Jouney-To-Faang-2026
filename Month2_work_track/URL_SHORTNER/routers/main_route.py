@@ -1,6 +1,7 @@
 from fastapi import APIRouter,HTTPException,status,Depends
 from sqlmodel import Session
 from pydantic import HttpUrl
+import uuid
 import utils
 import schemas,database
 import secrets
@@ -21,7 +22,9 @@ def create_short_url(long_url: schemas.URL_Create, session: Session = Depends(da
     
     for attempt in range(max_retries):
         # 1. Generate the hash
-        code = utils.generate_secure_hash(str(long_url.target_url))
+        entropy=""if attempt==1 else str(uuid.uuid4())
+        hash_input=str(long_url.target_url)+entropy
+        code = utils.generate_secure_hash(hash_input)
         
         # 2. Create the model instance
         new_url = schemas.URL(short_id=code, target_url=str(long_url.target_url))
